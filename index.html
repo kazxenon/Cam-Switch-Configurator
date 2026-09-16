@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cam Switch Configurator</title>
+<meta name="description" content="Interactive cam switch contact-program configurator with physical contact visualization and jumper validation.">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="app" id="app">
+  <header class="topbar">
+    <div><h1>Cam Switch Configurator</h1><p>Interactive 12-contact / 24-terminal cam-switch switching programme based on the supplied customized-model sheet. Configure contact states by angle, mechanical return behaviour, and global physical jumpers.</p></div>
+    <div class="actions">
+      <button class="btn" id="exportBtn" type="button">Export JSON</button>
+      <button class="btn" id="importBtn" type="button">Import JSON</button>
+      <button class="btn" id="printBtn" type="button">Print</button>
+      <button class="btn danger" id="resetBtn" type="button">Reset</button>
+      <input class="hidden" id="importFile" type="file" accept="application/json,.json">
+    </div>
+  </header>
+
+  <section class="grid-main">
+    <article class="card">
+      <div class="section-title"><div><h2>Cam position</h2><p>Select a shaft angle in 15° increments. The physical contact row updates immediately.</p></div></div>
+      <div class="angle-row">
+        <div class="field"><label for="angleSelect">Selected angle</label><select id="angleSelect"></select></div>
+        <div class="angle-nav"><button type="button" id="prevAngle" aria-label="Previous angle">←</button><button type="button" id="nextAngle" aria-label="Next angle">→</button></div>
+      </div>
+      <div class="cam-wrap">
+        <svg id="camSvg" class="cam-svg" viewBox="0 0 460 460" role="img" aria-label="Rotary cam position diagram">
+          <circle cx="230" cy="230" r="185" fill="#fbfcfd" stroke="#d8dee6" stroke-width="3"></circle>
+          <circle cx="230" cy="230" r="142" fill="none" stroke="#d8dee6" stroke-width="2"></circle>
+          <g id="camTicks"></g><g id="camLabels"></g>
+          <path id="positionReturnArc" fill="none" stroke="#b7791f" stroke-width="6" stroke-linecap="round" opacity="0"></path>
+          <path id="springReturnArc" fill="none" stroke="#c63c3c" stroke-width="6" stroke-dasharray="9 7" stroke-linecap="round" opacity="0"></path>
+          <line id="needle" x1="230" y1="230" x2="230" y2="80" stroke="#155eef" stroke-width="9" stroke-linecap="round"></line>
+          <circle cx="230" cy="230" r="19" fill="#155eef"></circle><circle cx="230" cy="230" r="8" fill="#fff"></circle>
+          <text id="angleText" x="230" y="282" text-anchor="middle" font-size="32" font-weight="800" fill="#17202a">0°</text>
+          <g id="camNotes"></g>
+        </svg>
+      </div>
+      <div class="summary-grid"><div class="summary"><div class="k">Closed pairs</div><div class="v" id="closedSummary">None</div></div><div class="summary"><div class="k">Closed without interruption</div><div class="v" id="continuousSummary">None</div></div></div>
+    </article>
+
+    <aside class="card">
+      <div class="section-title"><div><h2>Switch details</h2><p>Optional project information saved with the configuration.</p></div></div>
+      <div class="controls">
+        <div class="field"><label for="modelInput">Model</label><input id="modelInput" type="text" placeholder="e.g. customized model"></div>
+        <div class="field"><label for="customerInput">Customer</label><input id="customerInput" type="text" placeholder="Customer name"></div>
+        <div class="field"><label for="referenceInput">Reference</label><input id="referenceInput" type="text" placeholder="Reference"></div>
+        <div class="field"><label for="ratedCurrentInput">Rated current</label><input id="ratedCurrentInput" type="text" placeholder="e.g. 20 A"></div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+      <div class="section-title"><div><h2>Mechanical behaviour at <span id="mechanicalAngle">0°</span></h2><p>Return settings belong to the selected position.</p></div></div>
+      <div class="switches"><label class="check"><input id="positionReturnCheck" type="checkbox">Position return</label><label class="check"><input id="springReturnCheck" type="checkbox">Spring return</label></div>
+      <div class="controls">
+        <div class="field"><label for="positionReturnTarget">Position return to</label><select id="positionReturnTarget"></select></div>
+        <div class="field"><label for="springReturnTarget">Spring back to</label><select id="springReturnTarget"></select></div>
+      </div>
+      <div class="warning" style="margin-top:12px">Return symbols are represented as angle-to-angle behaviour. Exact detent/spring mechanics depend on the actual cam-switch construction.</div>
+    </aside>
+  </section>
+
+  <section class="card physical-card">
+    <div class="section-title"><div><h2>Physical switch construction</h2><p>12 alternating contact elements / 24 terminals, drawn to follow the contact row in the supplied PDF more closely. Solid teal lines are internal bridges; dashed amber lines are external wires.</p></div><div><strong id="physicalAngle">0°</strong> selected</div></div>
+    <div class="physical-scroll"><svg id="physicalSvg" class="physical-svg" viewBox="0 0 1440 330" role="img" aria-label="Physical cam switch contacts and jumper wiring"><g id="jumperLayer"></g><g id="contactLayer"></g></svg></div>
+    <div class="legend"><span><b>Open:</b> visible contact gap</span><span><b>Closed:</b> contact touches fixed step</span><span><b>Closed without interruption:</b> closed plus continuous marker</span></div>
+    <div class="status" id="jumperSummary">No physical jumpers configured.</div>
+  </section>
+
+  <section class="state-layout">
+    <article class="card">
+      <div class="section-title"><div><h2>Contact state at selected angle</h2><p>Tap a pair to cycle <b>Open → Closed → Closed without interruption</b>.</p></div></div>
+      <div id="pairButtons" class="pair-grid"></div>
+    </article>
+
+    <aside class="card jumper-controls">
+      <div class="section-title"><div><h2>Global physical jumper wiring</h2><p>Jumpers apply at every cam angle.</p></div></div>
+      <div class="field" style="margin-top:10px"><label for="jumperType">Jumper type</label><select id="jumperType"><option value="internal">Internal bridge</option><option value="external">External wire</option></select></div>
+      <div class="jumper-grid" style="margin-top:8px"><div class="field"><label for="jFrom">From terminal</label><select id="jFrom"></select></div><div class="field"><label for="jTo">To terminal</label><select id="jTo"></select></div></div>
+      <div id="validationBox" class="validation"><strong id="validationTitle">Select terminals</strong><div id="validationText" class="note" style="margin-top:3px">The app will apply conservative physical rules.</div></div>
+      <button class="btn primary" id="addJumper" type="button" style="width:100%;margin-top:9px">Add jumper</button>
+      <div id="jumperList" class="jumper-list"></div>
+    </aside>
+  </section>
+
+  <section class="card rules">
+    <div class="section-title"><div><h2>Jumper limitations used by this app</h2><p>These are conservative generic engineering assumptions, not manufacturer-confirmed Secfetronik hardware rules.</p></div></div>
+    <div class="rules-grid" style="margin-top:10px">
+      <div class="rule"><b>Internal bridge</b>Allowed only between adjacent terminals on the same side of the stack: odd-to-odd or even-to-even with a difference of 2 (for example 1↔3 or 2↔4).</div>
+      <div class="rule"><b>External wire</b>Any two distinct accessible terminals can be selected in principle, but electrical suitability is not guaranteed.</div>
+      <div class="rule"><b>Same contact pair</b>An external wire across 1↔2, 3↔4, etc. is allowed only with a warning because it permanently bypasses that switching contact. It is blocked as an internal bridge.</div>
+      <div class="rule"><b>Multi-terminal common</b>If a terminal already participates in another jumper, the app warns that a common bus/branch is being created and combined current must be checked.</div>
+      <div class="rule"><b>Not electrically validated</b>The app does not know L1/L2/L3, circuit voltage, load, fault current, conductor size, or protective devices, so a physically allowed jumper may still be electrically unsafe.</div>
+      <div class="rule"><b>Manufacturer confirmation</b>Rigid internal bridge availability, spacing, insulation, current rating, and layer restrictions must be confirmed for the actual switch series.</div>
+    </div>
+  </section>
+
+  <section class="card matrix-card">
+    <div class="section-title"><div><h2>Switching programme</h2><p>Each column is one physical contact pair. Click any cell to cycle its state; click an angle to select that row.</p></div><div class="state-actions"><button class="btn" id="clearAngle" type="button">Clear selected angle</button> <button class="btn" id="clearProgramme" type="button">Clear programme</button></div></div>
+    <div class="table-wrap"><table class="matrix"><thead><tr><th class="angle-cell">Angle</th><th colspan="12">Contact pairs</th><th>Mechanical</th></tr><tr id="pairHeader"><th class="angle-cell"></th></tr></thead><tbody id="matrixBody"></tbody></table></div>
+  </section>
+  <div class="status" id="status" aria-live="polite">Ready. Changes are saved automatically in this browser.</div>
+  <div class="footer">Prototype configurator. Always verify the final switching programme, contact ratings, bridge hardware and wiring with the actual cam-switch manufacturer before production.</div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
