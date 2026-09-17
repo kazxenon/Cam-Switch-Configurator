@@ -23,7 +23,38 @@ function svgPath(d,w=5,stroke='#211815',fill='none'){const e=document.createElem
 function svgCircle(cx,cy,r,w=4){const e=document.createElementNS(ns,'circle');e.setAttribute('cx',cx);e.setAttribute('cy',cy);e.setAttribute('r',r);e.setAttribute('fill','#fff');e.setAttribute('stroke','#211815');e.setAttribute('stroke-width',w);return e}
 function svgText(x,y,value,size=13,weight='650',fill='#211815'){const e=document.createElementNS(ns,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor','middle');e.setAttribute('font-size',size);e.setAttribute('font-weight',weight);e.setAttribute('fill',fill);e.textContent=value;return e}
 function terminalPoint(term){const i=Math.floor((term-1)/2),x=67+i*118;return{x,y:term%2?42:273}}
-function drawContact(i,s){const x=67+i*118,mirror=i%2===1,g=document.createElementNS(ns,'g');g.dataset.p=i;g.setAttribute('role','button');g.setAttribute('tabindex','0');g.setAttribute('aria-label',`Contact ${pairs[i].join(' to ')}, ${stateName(s)}`);g.style.cursor='pointer';const dir=mirror?1:-1,bodyX=x+dir*22,movingX=x-dir*12,step=x+dir*9;g.appendChild(svgCircle(x,42,11));g.appendChild(svgCircle(x,273,11));g.appendChild(svgLine(x,53,movingX,91,5));g.appendChild(svgLine(x,262,bodyX,229,5));g.appendChild(svgLine(bodyX,102,bodyX,229,7));g.appendChild(svgPath(`M ${bodyX} 136 C ${x+dir*3} 137 ${x+dir*3} 177 ${bodyX} 178`,4));g.appendChild(svgPath(`M ${bodyX} 101 L ${bodyX} 90 L ${step} 90 L ${step} 100`,7));g.appendChild(svgPath(`M ${bodyX} 230 L ${bodyX} 219 L ${step} 219 L ${step} 230`,7));g.appendChild(svgLine(movingX,91,s?step:movingX,s?98:112,6,s===2?'#8b5cf6':'#211815'));if(s>0){const r=document.createElementNS(ns,'rect');r.setAttribute('x',step-3);r.setAttribute('y','95');r.setAttribute('width','6');r.setAttribute('height','7');r.setAttribute('fill',s===2?'#8b5cf6':'#168a5b');g.appendChild(r)}if(s===2){g.appendChild(svgLine(x-14,191,x+14,191,3,'#8b5cf6'));g.appendChild(svgLine(x-14,198,x+14,198,3,'#8b5cf6'))}g.appendChild(svgText(x,20,pairs[i][0]));g.appendChild(svgText(x,304,pairs[i][1]));g.appendChild(svgText(x,251,s===0?'OPEN':s===1?'CLOSED':'CONT.',10,'750',s===0?'#667085':s===1?'#168a5b':'#8b5cf6'));return g}
+function drawContact(i,s){
+  const x=67+i*118,mirror=i%2===1,g=document.createElementNS(ns,'g');
+  g.dataset.p=i;g.setAttribute('role','button');g.setAttribute('tabindex','0');
+  g.setAttribute('aria-label',`Contact ${pairs[i].join(' to ')}, ${stateName(s)}`);g.style.cursor='pointer';
+
+  const dir=mirror?1:-1;
+  const bodyX=x+dir*24;
+  const innerX=bodyX-dir*12;
+  const stemX=x+dir*5;
+
+  g.appendChild(svgCircle(x,42,11));
+  g.appendChild(svgCircle(x,273,11));
+  g.appendChild(svgPath(`M ${x} 53 L ${x} 67 L ${stemX} 82 L ${stemX} 96 L ${innerX} 96`,5));
+  g.appendChild(svgPath(`M ${innerX} 218 L ${stemX} 218 L ${stemX} 234 L ${x} 249 L ${x} 262`,5));
+
+  g.appendChild(svgLine(bodyX,90,bodyX,224,7));
+  g.appendChild(svgPath(`M ${bodyX} 98 L ${bodyX} 88 L ${innerX} 88 L ${innerX} 99`,7));
+  g.appendChild(svgPath(`M ${bodyX} 216 L ${bodyX} 226 L ${innerX} 226 L ${innerX} 215`,7));
+  g.appendChild(svgPath(`M ${bodyX} 137 C ${bodyX-dir*31} 137 ${bodyX-dir*31} 180 ${bodyX} 180`,4));
+
+  const markerX=innerX-dir*5,markerY=96;
+  if(s===1){
+    const m=document.createElementNS(ns,'circle');m.setAttribute('cx',markerX);m.setAttribute('cy',markerY);m.setAttribute('r','5.5');m.setAttribute('fill','#168a5b');m.setAttribute('stroke','#fff');m.setAttribute('stroke-width','2');g.appendChild(m);
+  }else if(s===2){
+    const m1=document.createElementNS(ns,'circle');m1.setAttribute('cx',markerX);m1.setAttribute('cy',markerY);m1.setAttribute('r','5.5');m1.setAttribute('fill','#8b5cf6');m1.setAttribute('stroke','#fff');m1.setAttribute('stroke-width','2');g.appendChild(m1);
+    const m2=document.createElementNS(ns,'circle');m2.setAttribute('cx',markerX-dir*11);m2.setAttribute('cy',markerY);m2.setAttribute('r','3.5');m2.setAttribute('fill','#8b5cf6');g.appendChild(m2);
+  }
+
+  g.appendChild(svgText(x,20,pairs[i][0]));
+  g.appendChild(svgText(x,307,pairs[i][1]));
+  return g;
+}
 function arcPath(from,to,r){const s=polar(from,r),e=polar(to,r);let delta=((to-from)%360+360)%360;if(delta>180)delta-=360;const sweep=delta>=0?1:0;return`M ${s.x} ${s.y} A ${r} ${r} 0 0 ${sweep} ${e.x} ${e.y}`}
 function renderCam(){const d=state.program[selected],p=polar(selected,148);$('#needle').setAttribute('x2',p.x);$('#needle').setAttribute('y2',p.y);$('#angleText').textContent=selected+'°';$('#camTicks').querySelectorAll('line').forEach(l=>{const a=Number(l.dataset.a),active=a===selected;l.setAttribute('stroke',active?'#155eef':'#d8dee6');l.setAttribute('stroke-width',active?'9':a%45===0?'4':'2')});const pr=$('#positionReturnArc'),sr=$('#springReturnArc');if(d.positionReturn&&d.positionTarget!==selected){pr.setAttribute('d',arcPath(selected,d.positionTarget,120));pr.setAttribute('opacity','1')}else pr.setAttribute('opacity','0');if(d.springReturn&&d.springTarget!==selected){sr.setAttribute('d',arcPath(selected,d.springTarget,105));sr.setAttribute('opacity','1')}else sr.setAttribute('opacity','0');const notes=$('#camNotes');notes.innerHTML='';let y=320;if(d.positionReturn){notes.appendChild(svgText(230,y,'Position return → '+d.positionTarget+'°',14,'650','#b7791f'));y+=21}if(d.springReturn){notes.appendChild(svgText(230,y,'Spring return → '+d.springTarget+'°',14,'650','#c63c3c'))}const cl=d.pairs.map((s,i)=>s===1?pairs[i].join('–'):null).filter(Boolean),co=d.pairs.map((s,i)=>s===2?pairs[i].join('–'):null).filter(Boolean);$('#closedSummary').textContent=cl.length?cl.join(', '):'None';$('#continuousSummary').textContent=co.length?co.join(', '):'None'}
 function renderPhysical(){const contacts=$('#contactLayer'),wires=$('#jumperLayer');contacts.innerHTML='';wires.innerHTML='';state.jumpers.forEach((j,idx)=>{const a=terminalPoint(j.a),b=terminalPoint(j.b);if(j.type==='internal'&&a.y===b.y){const y=a.y<100?18:313;wires.appendChild(svgPath(`M ${a.x} ${a.y} L ${a.x} ${y} L ${b.x} ${y} L ${b.x} ${b.y}`,5,'#0f766e'));wires.appendChild(svgText((a.x+b.x)/2,y+(y<100?14:-7),'IB'+(idx+1),11,'800','#0f766e'))}else{const routeY=a.y===b.y?(a.y<100?8:321):160;const p=svgPath(`M ${a.x} ${a.y} C ${a.x} ${routeY} ${b.x} ${routeY} ${b.x} ${b.y}`,4,'#b45309');p.setAttribute('stroke-dasharray','8 5');wires.appendChild(p);wires.appendChild(svgText((a.x+b.x)/2,routeY+(routeY<100?14:-7),'EW'+(idx+1),11,'800','#b45309'))}});state.program[selected].pairs.forEach((s,i)=>contacts.appendChild(drawContact(i,s)));$('#physicalAngle').textContent=selected+'°';$('#jumperSummary').textContent=state.jumpers.length?'Physical jumpers: '+state.jumpers.map((j,i)=>(j.type==='internal'?'IB':'EW')+(i+1)+' '+j.a+'↔'+j.b).join(' · '):'No physical jumpers configured.'}
