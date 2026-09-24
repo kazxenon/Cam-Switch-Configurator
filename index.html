@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cam Switch Configurator</title>
 <meta name="description" content="Interactive cam switch contact-program configurator with physical contact visualization and jumper validation.">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app.css?v=20260924-2">
 </head>
 <body>
 <main class="app" id="app">
@@ -19,6 +19,16 @@
       <input class="hidden" id="importFile" type="file" accept="application/json,.json">
     </div>
   </header>
+
+  <section class="card switch-details">
+      <div class="section-title"><div><h2>Switch details</h2><p>Optional project information saved with the configuration.</p></div></div>
+      <div class="controls">
+        <div class="field"><label for="modelInput">Model</label><input id="modelInput" type="text" placeholder="e.g. customized model"></div>
+        <div class="field"><label for="customerInput">Customer</label><input id="customerInput" type="text" placeholder="Customer name"></div>
+        <div class="field"><label for="referenceInput">Reference</label><input id="referenceInput" type="text" placeholder="Reference"></div>
+        <div class="field"><label for="ratedCurrentInput">Rated current</label><input id="ratedCurrentInput" type="text" placeholder="e.g. 20 A"></div>
+      </div>
+  </section>
 
   <section class="grid-main">
     <article class="card">
@@ -44,14 +54,6 @@
     </article>
 
     <aside class="card">
-      <div class="section-title"><div><h2>Switch details</h2><p>Optional project information saved with the configuration.</p></div></div>
-      <div class="controls">
-        <div class="field"><label for="modelInput">Model</label><input id="modelInput" type="text" placeholder="e.g. customized model"></div>
-        <div class="field"><label for="customerInput">Customer</label><input id="customerInput" type="text" placeholder="Customer name"></div>
-        <div class="field"><label for="referenceInput">Reference</label><input id="referenceInput" type="text" placeholder="Reference"></div>
-        <div class="field"><label for="ratedCurrentInput">Rated current</label><input id="ratedCurrentInput" type="text" placeholder="e.g. 20 A"></div>
-      </div>
-      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
       <div class="section-title"><div><h2>Mechanical behaviour at <span id="mechanicalAngle">0°</span></h2><p>Return settings belong to the selected position.</p></div></div>
       <div class="switches"><label class="check"><input id="positionReturnCheck" type="checkbox">Position return</label><label class="check"><input id="springReturnCheck" type="checkbox">Spring return</label></div>
       <div class="controls">
